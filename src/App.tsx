@@ -20,6 +20,8 @@ import { getStoredUser, clearStoredUser } from './utils/userStorage';
 import { playWarpSound, playClickSound } from './utils/sound';
 import { ArcReactorCursor } from './components/ArcReactorCursor';
 import { DigitalCampusHub } from './components/DigitalCampusHub';
+import { JarvisAssistant } from './components/JarvisAssistant';
+import { AdminPortal } from './components/AdminPortal';
 
 export default function App() {
   const [studentUser, setStudentUser] = useState<StudentUser | null>(() => getStoredUser());
@@ -27,6 +29,11 @@ export default function App() {
   const [portalDept, setPortalDept] = useState<Department | null>(null);
   const [showPortal, setShowPortal] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [jarvisOpen, setJarvisOpen] = useState(false);
+
+  if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
+    return <AdminPortal />;
+  }
 
   // If student is not logged in, show the Login Page before web opens
   if (!studentUser) {
@@ -111,7 +118,7 @@ export default function App() {
 
       {/* Main Page Sections */}
       <main id="top" className="flex-1">
-        <RIT3DWorld />
+        <RIT3DWorld onJarvisClick={() => setJarvisOpen(true)} />
         <Hero 
           onExploreClick={scrollToDepartments} 
           onTakeQuizClick={handleStartQuizFromNavOrHero} 
@@ -147,6 +154,7 @@ export default function App() {
 
       {/* Campus Footer */}
       <Footer />
+      <JarvisAssistant open={jarvisOpen} onClose={() => setJarvisOpen(false)} onSelectDepartment={(id) => { setJarvisOpen(false); const dept = DEPTS.find((d) => d.id === id); if (dept) handleSelectDepartment(dept); }} />
       </div>
     </>
   );

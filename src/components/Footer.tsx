@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Phone, Mail, MapPin, Heart } from 'lucide-react';
+import { ExternalLink, Phone, Mail, MapPin, Heart, Shield } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -76,7 +76,7 @@ export const Footer: React.FC = () => {
 
       <div className="max-w-7xl mx-auto pt-8 border-t border-[#20242c] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#707987]">
         <p>© {new Date().getFullYear()} Ramco Institute of Technology. All Rights Reserved.</p>
-        <p className="flex items-center gap-1">
+        <a href="/admin" className="admin-footer-link"><Shield className="w-3 h-3" /> Admin Command Core</a><p className="flex items-center gap-1">
           Designed for excellence and student learning at RIT <Heart className="w-3 h-3 text-red-500 fill-red-500" />
         </p>
       </div>
