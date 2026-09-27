@@ -56,7 +56,12 @@ export default function App() {
   if (booting) return <div className="min-h-screen bg-[#080a0f] text-[#55e6a5] flex items-center justify-center font-mono">JARVIS // CONNECTING TO RIT CLOUD...</div>;
 
   if (adminSession) {
-    return <AdminPortal admin={adminSession} onLogout={async () => { await signOutCloud(); setAdminSession(null); setStudentUser(null); window.history.replaceState({}, '', '/'); }} />;
+    return (
+      <>
+        <ArcReactorCursor />
+        <AdminPortal admin={adminSession} onLogout={async () => { await signOutCloud(); setAdminSession(null); setStudentUser(null); window.history.replaceState({}, '', '/'); }} />
+      </>
+    );
   }
 
   // The /admin route uses the same shared login screen, but opens it in Admin mode.
