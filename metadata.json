@@ -1,0 +1,6 @@
+{
+  "name": "Ramco Institute of Technology",
+  "description": "Official interactive academic portal and engineering quiz arena for Ramco Institute of Technology (RIT), Rajapalayam.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
