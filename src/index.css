@@ -335,3 +335,113 @@
 @media (max-width:700px){.rit-world{height:390px}.admin-building{left:10%;width:230px}.lab-building{display:none}.campus-tower{left:72%;transform:scale(.8)}.campus-portal{left:42%;top:42%;transform:scale(.8)}.world-label{top:7%;left:5%}.holo-panel{display:none}.holo-question{width:85%}.podium-3d{height:245px}.podium-avatar{width:48px;height:48px}.podium-name{font-size:10px}}
 
 .building-block{position:absolute;bottom:32px;background:linear-gradient(145deg,var(--accent),#0b1014);border:1px solid var(--accent);box-shadow:0 0 18px color-mix(in srgb,var(--accent) 25%,transparent);animation:blockRise 2.8s ease-in-out infinite alternate}.building-block.b1{left:12px;width:42px;height:90px}.building-block.b2{left:55px;width:54px;height:125px;animation-delay:-.5s}.building-block.b3{right:16px;width:46px;height:72px;animation-delay:-1s}.building-road{position:absolute;left:0;right:0;bottom:25px;height:7px;background:var(--accent);box-shadow:0 0 15px var(--accent)}@keyframes blockRise{to{transform:translateY(-7px)}}
+
+/* =========================================================
+   RIT ARC REACTOR POINTER + TOUCH LAYER
+   ========================================================= */
+html, body, #root { min-height: 100%; }
+
+@media (pointer: fine) {
+  body { cursor: none; }
+  button, a, input, select, textarea { cursor: none !important; }
+}
+
+.arc-cursor {
+  position: fixed;
+  width: 38px;
+  height: 38px;
+  margin-left: -19px;
+  margin-top: -19px;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(.82);
+  transition: opacity .18s ease, transform .12s ease;
+  filter: drop-shadow(0 0 8px rgba(85,230,165,.75));
+}
+.arc-cursor.is-visible { opacity: 1; transform: scale(1); }
+.arc-cursor.is-active { transform: scale(.72); }
+.arc-cursor-ring {
+  position:absolute; inset:2px; border:1.5px solid rgba(110,255,194,.95); border-radius:50%;
+  box-shadow: inset 0 0 10px rgba(85,230,165,.45), 0 0 14px rgba(85,230,165,.45);
+  animation: arcSpin 5s linear infinite;
+}
+.arc-cursor-ring::before, .arc-cursor-ring::after {
+  content:""; position:absolute; inset:6px; border-radius:50%; border:1px dashed rgba(85,230,165,.5);
+}
+.arc-cursor-ring::after { inset:11px; border-style:solid; opacity:.7; }
+.arc-cursor-core {
+  position:absolute; width:11px; height:11px; left:50%; top:50%; transform:translate(-50%,-50%);
+  border-radius:50%; background:#d8fff0; border:2px solid #55e6a5;
+  box-shadow:0 0 5px #fff,0 0 13px #55e6a5,0 0 25px rgba(85,230,165,.9);
+  animation: arcPulse 1.15s ease-in-out infinite;
+}
+.arc-cursor-spoke { position:absolute; width:3px; height:7px; left:50%; top:-2px; transform-origin:50% 21px; background:#55e6a5; border-radius:2px; box-shadow:0 0 7px #55e6a5; }
+.arc-cursor-spoke.s1{transform:rotate(0deg)} .arc-cursor-spoke.s2{transform:rotate(90deg)} .arc-cursor-spoke.s3{transform:rotate(180deg)} .arc-cursor-spoke.s4{transform:rotate(270deg)}
+.arc-cursor-trail {
+  position:fixed; width:4px; height:4px; margin:-2px; border-radius:50%; z-index:99998; pointer-events:none;
+  background:#55e6a5; box-shadow:0 0 8px #55e6a5,0 0 16px rgba(85,230,165,.5); opacity:.45;
+  transition:left .16s ease-out, top .16s ease-out;
+}
+.touch-ripple {
+  position:fixed; z-index:99997; width:18px; height:18px; margin:-9px; border:1px solid #55e6a5; border-radius:50%; pointer-events:none;
+  box-shadow:0 0 12px rgba(85,230,165,.8), inset 0 0 8px rgba(85,230,165,.3);
+  animation: touchExpand .8s ease-out forwards;
+}
+@keyframes arcSpin { to { transform:rotate(360deg); } }
+@keyframes arcPulse { 50% { transform:translate(-50%,-50%) scale(1.22); } }
+@keyframes touchExpand { to { transform:scale(7); opacity:0; } }
+
+/* =========================================================
+   WHOLE HOMEPAGE = FUTURISTIC GREEN PCB / MOTHERBOARD
+   ========================================================= */
+.rit-app-shell {
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(35,100,72,.20), transparent 34%),
+    radial-gradient(circle at 10% 45%, rgba(0,255,156,.07), transparent 26%),
+    #050807 !important;
+}
+.rit-app-shell::before {
+  content:"";
+  position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.78;
+  background-image:
+    linear-gradient(rgba(85,230,165,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(85,230,165,.055) 1px, transparent 1px),
+    linear-gradient(rgba(85,230,165,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(85,230,165,.018) 1px, transparent 1px);
+  background-size:72px 72px,72px 72px,18px 18px,18px 18px;
+  mask-image:linear-gradient(to bottom, black, rgba(0,0,0,.78) 70%, transparent);
+}
+.rit-app-shell::after {
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.25;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 130px, rgba(85,230,165,.06) 131px, transparent 132px),
+    repeating-linear-gradient(0deg, transparent 0 110px, rgba(85,230,165,.045) 111px, transparent 112px);
+}
+
+/* PCB details in the 3D campus */
+.pcb-board { position:absolute; inset:0; overflow:hidden; pointer-events:none; opacity:.72; transform:perspective(900px) rotateX(2deg); }
+.pcb-trace {
+  position:absolute; height:2px; width:180px; left:calc((var(--i) * 7.3%) - 5%); top:calc(20% + (var(--i) * 3.8%));
+  background:linear-gradient(90deg, transparent, rgba(85,230,165,.8), rgba(85,230,165,.15), transparent);
+  box-shadow:0 0 7px rgba(85,230,165,.45); transform:rotate(calc((var(--i) * 17deg) - 70deg));
+  animation: pcbFlow 3s linear infinite; animation-delay:calc(var(--i) * -.16s);
+}
+.pcb-trace::after { content:""; position:absolute; right:0; top:-3px; width:8px; height:8px; border-radius:50%; background:#9affd0; box-shadow:0 0 10px #55e6a5; }
+.pcb-node { position:absolute; width:7px; height:7px; border-radius:50%; left:calc(4% + (var(--i) * 7%)); top:calc(16% + ((var(--i) * 13) % 64) * 1%); background:#55e6a5; box-shadow:0 0 9px #55e6a5; animation: pcbBlink 1.6s infinite alternate; animation-delay:calc(var(--i) * -.11s); }
+.pcb-chip { position:absolute; display:grid; place-items:center; border:1px solid rgba(85,230,165,.42); background:linear-gradient(145deg,rgba(25,45,37,.8),rgba(4,12,9,.85)); color:#55e6a5; font:800 9px monospace; letter-spacing:.18em; box-shadow:inset 0 0 15px rgba(85,230,165,.08),0 0 15px rgba(85,230,165,.08); }
+.chip-a{width:82px;height:48px;left:7%;top:26%;}.chip-b{width:62px;height:38px;right:9%;top:32%;}.chip-c{width:105px;height:54px;right:18%;bottom:18%;}
+@keyframes pcbFlow { 0%{opacity:.18;transform:translateX(-30px) rotate(calc((var(--i) * 17deg) - 70deg))} 50%{opacity:1} 100%{opacity:.18;transform:translateX(35px) rotate(calc((var(--i) * 17deg) - 70deg))} }
+@keyframes pcbBlink { to{opacity:.25;transform:scale(.65)} }
+
+/* More depth in the campus world */
+.world-sky { background:radial-gradient(circle at 50% 35%,rgba(55,180,120,.16),transparent 32%),linear-gradient(180deg,#07110d 0%,#050807 72%); }
+.world-grid { opacity:.55; filter:drop-shadow(0 0 5px rgba(85,230,165,.25)); }
+
+@media (max-width: 700px) {
+  .rit-app-shell::before { background-size:46px 46px,46px 46px,16px 16px,16px 16px; opacity:.62; }
+  .pcb-chip { transform:scale(.78); }
+  .pcb-trace { width:120px; }
+}

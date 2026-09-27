@@ -22,6 +22,11 @@ export const RIT3DWorld: React.FC<{ compact?: boolean }> = ({ compact = false })
         {trees.map(i => <div key={i} className="campus-tree" style={{'--x': `${8 + i * 10}%`, '--d': `${i * .13}s`} as React.CSSProperties}><i /><b /></div>)}
         <div className="campus-portal"><div className="portal-ring" /><span>RIT<br/><small>KNOWLEDGE</small></span></div>
       </div>
+      <div className="pcb-board">
+        {Array.from({ length: 18 }, (_, i) => <span key={i} className="pcb-trace" style={{ '--i': i } as React.CSSProperties} />)}
+        {Array.from({ length: 14 }, (_, i) => <b key={i} className="pcb-node" style={{ '--i': i } as React.CSSProperties} />)}
+        <i className="pcb-chip chip-a">RIT</i><i className="pcb-chip chip-b">AI</i><i className="pcb-chip chip-c">CORE</i>
+      </div>
       <div className="world-grid" />
       <div className="world-label"><strong>RAMCO INSTITUTE OF TECHNOLOGY</strong><span>3D CAMPUS // KNOWLEDGE NETWORK ONLINE</span></div>
     </div>

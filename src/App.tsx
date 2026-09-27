@@ -18,6 +18,7 @@ import { LoginPage } from './components/LoginPage';
 import { StudentUser } from './types/user';
 import { getStoredUser, clearStoredUser } from './utils/userStorage';
 import { playWarpSound, playClickSound } from './utils/sound';
+import { ArcReactorCursor } from './components/ArcReactorCursor';
 
 export default function App() {
   const [studentUser, setStudentUser] = useState<StudentUser | null>(() => getStoredUser());
@@ -29,14 +30,17 @@ export default function App() {
   // If student is not logged in, show the Login Page before web opens
   if (!studentUser) {
     return (
-      <LoginPage 
+      <>
+        <ArcReactorCursor />
+        <LoginPage 
         onLoginSuccess={(user) => {
           setStudentUser(user);
           if (user.deptId) {
             setSelectedDeptId(user.deptId);
           }
         }} 
-      />
+        />
+      </>
     );
   }
 
@@ -90,7 +94,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080a0f] text-[#f3f5f7] flex flex-col font-sans selection:bg-[#55e6a5]/20 selection:text-[#55e6a5]">
+    <>
+      <ArcReactorCursor />
+      <div className="rit-app-shell min-h-screen bg-[#080a0f] text-[#f3f5f7] flex flex-col font-sans selection:bg-[#55e6a5]/20 selection:text-[#55e6a5]">
       {/* Warp Portal Transition Overlay */}
       <PortalTransition show={showPortal} department={portalDept} />
 
@@ -133,6 +139,7 @@ export default function App() {
 
       {/* Campus Footer */}
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
