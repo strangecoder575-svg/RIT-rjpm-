@@ -19,6 +19,7 @@ import { StudentUser } from './types/user';
 import { getStoredUser, clearStoredUser } from './utils/userStorage';
 import { playWarpSound, playClickSound } from './utils/sound';
 import { ArcReactorCursor } from './components/ArcReactorCursor';
+import { DigitalCampusHub } from './components/DigitalCampusHub';
 
 export default function App() {
   const [studentUser, setStudentUser] = useState<StudentUser | null>(() => getStoredUser());
@@ -117,6 +118,13 @@ export default function App() {
         />
         
         <AboutSection />
+
+        <DigitalCampusHub
+          departments={DEPTS}
+          studentName={studentUser.name}
+          studentDeptId={studentUser.deptId}
+          onSelectDepartment={handleSelectDepartment}
+        />
         
         <DepartmentsGrid 
           departments={DEPTS} 

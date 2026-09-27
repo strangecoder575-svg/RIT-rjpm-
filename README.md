@@ -47,3 +47,9 @@ The SPA rewrite in `vercel.json` keeps direct URLs working correctly.
 ## Important
 
 The current leaderboard/user storage is browser-local storage. A Vercel deployment makes the website publicly accessible, but it does not create a shared cloud database. A future database layer can be added for global cross-device scores.
+
+## Digital Campus upgrade
+
+This version adds the interactive RIT Digital Campus layer: JARVIS campus core, day/night campus mode, local XP progression, daily mission, interactive campus map, department building portals, live activity feed, and department-specific Arc Reactor cursor activation.
+
+For Vercel, keep the project root at `./`, framework `Vite`, build command `npm run build`, and output directory `dist`.

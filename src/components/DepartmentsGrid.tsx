@@ -98,6 +98,10 @@ export const DepartmentsGrid: React.FC<DepartmentsGridProps> = ({
                   cursor: cursorUrl,
                   '--accent': d.accent
                 } as React.CSSProperties}
+                onMouseEnter={() => window.dispatchEvent(new CustomEvent('rit:department-hover', { detail: { active: true, dept: d } }))}
+                onMouseLeave={() => window.dispatchEvent(new CustomEvent('rit:department-hover', { detail: { active: false } }))}
+                onFocus={() => window.dispatchEvent(new CustomEvent('rit:department-hover', { detail: { active: true, dept: d } }))}
+                onBlur={() => window.dispatchEvent(new CustomEvent('rit:department-hover', { detail: { active: false } }))}
                 onClick={() => onSelectDepartment(d)}
                 className="dept group min-h-[470px] rounded-2xl p-7 flex flex-col bg-[#0d1117] border border-[#292f38] hover:border-[var(--accent)] transition-all duration-300 relative preserve-3d shadow-lg hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] select-none hover:-translate-y-2 hover:rotate-x-[4deg] hover:-rotate-y-[4deg]"
               >
