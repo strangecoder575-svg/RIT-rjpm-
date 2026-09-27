@@ -1,55 +1,29 @@
-# RIT 3D Quiz Portal
+# RIT Interactive Digital Campus — Shared Student/Admin + Fire XP
 
-Ramco Institute of Technology interactive 3D department and quiz portal built with React, TypeScript and Vite.
+## Login
+The website now uses one shared login page with a role switch at the top:
+- STUDENT: normal student portal login.
+- ADMIN: administrator login and admin-access request form.
 
-## Run locally
+## Initial administrator
+- Name: Strange
+- Roll No: 200812200810
+- Role: Super Admin
 
-```bash
-npm install
-npm run dev
-```
+An approved administrator can manage admin-access requests. In this prototype, only the Super Admin can approve or reject new admin requests.
 
-## Build
+## Fire XP
+XP is now tied to the signed-in student's roll number and is awarded for:
+- Correct quiz answers: +10 XP each.
+- Completing a quiz: +50 XP.
+- Perfect quiz: additional +100 XP.
+- Daily campus challenge: +100 XP.
+- Discovering a department building on the digital campus: +15 XP.
 
-```bash
-npm run build
-```
+The current XP is visible in the top navigation, Digital Campus profile, and quiz completion screen.
 
-## Deploy to Vercel
+## Important prototype note
+This version stores authentication, admin requests, XP and quiz counters in browser localStorage. It is useful for the interactive prototype, but it is NOT secure multi-user authentication. For production, move authentication and data to a server/database such as Supabase or Firebase and never put admin credentials in frontend code.
 
-This project is preconfigured for Vercel with `vercel.json`.
-
-### Option 1 — Vercel Dashboard
-
-1. Push this folder to a GitHub repository.
-2. Open Vercel and import the repository.
-3. Vercel detects Vite automatically.
-4. Keep the build command as `npm run build`.
-5. Keep the output directory as `dist`.
-6. Deploy.
-
-### Option 2 — Vercel CLI
-
-```bash
-npm install
-npm install -g vercel
-vercel
-```
-
-For production:
-
-```bash
-vercel --prod
-```
-
-The SPA rewrite in `vercel.json` keeps direct URLs working correctly.
-
-## Important
-
-The current leaderboard/user storage is browser-local storage. A Vercel deployment makes the website publicly accessible, but it does not create a shared cloud database. A future database layer can be added for global cross-device scores.
-
-## Digital Campus upgrade
-
-This version adds the interactive RIT Digital Campus layer: JARVIS campus core, day/night campus mode, local XP progression, daily mission, interactive campus map, department building portals, live activity feed, and department-specific Arc Reactor cursor activation.
-
-For Vercel, keep the project root at `./`, framework `Vite`, build command `npm run build`, and output directory `dist`.
+## Vercel
+The repository root must contain `package.json`, `index.html`, `src/`, `vite.config.ts`, and `vercel.json`.

@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Building2, CalendarDays, ChevronRight, Flame, Gamepad2, Globe2, Lightbulb, Map, Moon, Radio, ShieldCheck, Sparkles, Sun, Trophy, Users, Zap } from 'lucide-react';
 import { Department } from '../data/departments';
+import { StudentUser } from '../types/user';
+import { claimCampusDiscovery, claimDailyMission, getMyXp } from '../utils/cloud';
 
 interface DigitalCampusHubProps {
   departments: Department[];
   studentName?: string;
   studentDeptId?: string;
+  studentRollNo?: string;
   onSelectDepartment: (dept: Department) => void;
 }
 
@@ -17,16 +20,22 @@ const activityLabels = [
   'powered the RIT core',
 ];
 
-export const DigitalCampusHub: React.FC<DigitalCampusHubProps> = ({ departments, studentName = 'Student', studentDeptId, onSelectDepartment }) => {
+const featuredCode = (departments: Department[], id?: string) => departments.find(d => d.id === id)?.code || departments[0]?.code || 'RIT';
+
+export const DigitalCampusHub: React.FC<DigitalCampusHubProps> = ({ departments, studentName = 'Student', studentDeptId, studentRollNo, onSelectDepartment }) => {
+  const currentStudent: StudentUser = { name: studentName, rollNo: studentRollNo || 'rit-demo', deptId: studentDeptId || departments[0]?.id || 'cse', deptCode: featuredCode(departments, studentDeptId), loginTime: '' };
   const [nightMode, setNightMode] = useState(true);
-  const [xp, setXp] = useState(() => Number(localStorage.getItem('rit_xp') || 420));
-  const [challengeDone, setChallengeDone] = useState(() => localStorage.getItem('rit_daily_challenge') === new Date().toDateString());
+  const [xp, setXp] = useState(0);
+  const [challengeDone, setChallengeDone] = useState(false);
   const [jarvisMessage, setJarvisMessage] = useState('Campus systems online. Choose a destination.');
   const [activityTick, setActivityTick] = useState(0);
 
   useEffect(() => {
-    localStorage.setItem('rit_xp', String(xp));
-  }, [xp]);
+    const sync = () => { void getMyXp().then(setXp).catch(() => undefined); };
+    sync();
+    window.addEventListener('rit:xp-change', sync);
+    return () => window.removeEventListener('rit:xp-change', sync);
+  }, [studentName, studentRollNo, studentDeptId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setActivityTick((v) => v + 1), 2600);
@@ -38,19 +47,26 @@ export const DigitalCampusHub: React.FC<DigitalCampusHubProps> = ({ departments,
   const featured = useMemo(() => departments.find(d => d.id === studentDeptId) || departments[0], [departments, studentDeptId]);
   const activity = `${['Arun', 'Priya', 'Kavin', 'Meena', 'Rithik'][activityTick % 5]} ${activityLabels[activityTick % activityLabels.length]}`;
 
-  const award = (amount: number, message: string) => {
-    setXp(v => v + amount);
-    setJarvisMessage(`${message} +${amount} XP added to your reactor core.`);
+  const awardDiscovery = async (departmentId: string, message: string) => {
+    try {
+      const result = await claimCampusDiscovery(departmentId);
+      if (result.ok) {
+        const next = await getMyXp(); setXp(next);
+        setJarvisMessage(`${message} +${result.xp} XP added to your reactor core.`);
+      } else {
+        setJarvisMessage('That campus node is already in your discovery log.');
+      }
+      window.dispatchEvent(new CustomEvent('rit:xp-change'));
+    } catch { setJarvisMessage('Campus cloud connection interrupted. Try again.'); }
   };
 
-  const runDailyChallenge = () => {
-    if (challengeDone) {
-      setJarvisMessage('Daily challenge already completed. Return after the campus cycle resets.');
-      return;
-    }
-    setChallengeDone(true);
-    localStorage.setItem('rit_daily_challenge', new Date().toDateString());
-    award(100, 'Daily challenge secured.');
+  const runDailyChallenge = async () => {
+    if (challengeDone) { setJarvisMessage('Daily challenge already completed. Return after the campus cycle resets.'); return; }
+    try {
+      const result = await claimDailyMission();
+      if (result.ok) { setChallengeDone(true); const next = await getMyXp(); setXp(next); setJarvisMessage(`Daily challenge secured. +${result.xp} XP added to your reactor core.`); window.dispatchEvent(new CustomEvent('rit:xp-change')); }
+      else { setChallengeDone(true); setJarvisMessage('Daily challenge already completed. Return after the campus cycle resets.'); }
+    } catch { setJarvisMessage('Could not reach the RIT cloud mission system.'); }
   };
 
   const activateFeatured = () => {
@@ -107,7 +123,7 @@ export const DigitalCampusHub: React.FC<DigitalCampusHubProps> = ({ departments,
           <div className="map-road road-1"/><div className="map-road road-2"/><div className="map-road road-3"/>
           <div className="map-core"><div className="map-reactor"><i/><b/></div><strong>RIT CORE</strong><small>KNOWLEDGE HUB</small></div>
           {departments.map((d, i) => (
-            <button key={d.id} className="map-building" style={{ '--accent': d.accent, '--x': `${12 + (i % 3) * 35}%`, '--y': `${14 + Math.floor(i / 3) * 28}%`, '--delay': `${i * -.18}s` } as React.CSSProperties} onMouseEnter={() => setJarvisMessage(`${d.code} building detected. Hover link synchronized.`)} onFocus={() => setJarvisMessage(`${d.code} building detected.`)} onClick={() => { award(15, `${d.code} building discovered.`); onSelectDepartment(d); }}>
+            <button key={d.id} className="map-building" style={{ '--accent': d.accent, '--x': `${12 + (i % 3) * 35}%`, '--y': `${14 + Math.floor(i / 3) * 28}%`, '--delay': `${i * -.18}s` } as React.CSSProperties} onMouseEnter={() => setJarvisMessage(`${d.code} building detected. Hover link synchronized.`)} onFocus={() => setJarvisMessage(`${d.code} building detected.`)} onClick={() => { void awardDiscovery(d.id, `${d.code} building discovered.`); onSelectDepartment(d); }}>
               <Building2 size={17}/><span>{d.code}</span><small>{d.name.split(' ')[0]}</small><i className="building-pulse"/>
             </button>
           ))}

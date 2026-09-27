@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DEPTS, Department } from './data/departments';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
@@ -22,17 +22,55 @@ import { ArcReactorCursor } from './components/ArcReactorCursor';
 import { DigitalCampusHub } from './components/DigitalCampusHub';
 import { JarvisAssistant } from './components/JarvisAssistant';
 import { AdminPortal } from './components/AdminPortal';
+import { getMyProfile, signOutCloud } from './utils/cloud';
+import { supabase } from './utils/supabaseClient';
 
 export default function App() {
   const [studentUser, setStudentUser] = useState<StudentUser | null>(() => getStoredUser());
+  const [adminSession, setAdminSession] = useState<any>(null);
+  const [booting, setBooting] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const boot = async () => {
+      try {
+        const profile = await getMyProfile();
+        if (!active) return;
+        if (profile?.role === 'admin' || profile?.role === 'super-admin') { setAdminSession(profile); setStudentUser(null); }
+        else if (profile) setStudentUser(profile);
+        else { clearStoredUser(); setStudentUser(null); }
+      } catch (err) {
+        console.warn('Cloud session boot failed:', err);
+      } finally { if (active) setBooting(false); }
+    };
+    boot();
+    const listener = supabase?.auth.onAuthStateChange(() => { boot(); });
+    return () => { active = false; listener?.data.subscription.unsubscribe(); };
+  }, []);
   const [selectedDeptId, setSelectedDeptId] = useState<string>('cse');
   const [portalDept, setPortalDept] = useState<Department | null>(null);
   const [showPortal, setShowPortal] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [jarvisOpen, setJarvisOpen] = useState(false);
 
+  if (booting) return <div className="min-h-screen bg-[#080a0f] text-[#55e6a5] flex items-center justify-center font-mono">JARVIS // CONNECTING TO RIT CLOUD...</div>;
+
+  if (adminSession) {
+    return <AdminPortal admin={adminSession} onLogout={async () => { await signOutCloud(); setAdminSession(null); setStudentUser(null); window.history.replaceState({}, '', '/'); }} />;
+  }
+
+  // The /admin route uses the same shared login screen, but opens it in Admin mode.
   if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
-    return <AdminPortal />;
+    return (
+      <>
+        <ArcReactorCursor />
+        <LoginPage
+          onLoginSuccess={(user) => { setStudentUser(user); window.history.replaceState({}, '', '/'); }}
+          onAdminLoginSuccess={async () => { const profile = await getMyProfile(); setAdminSession(profile); }}
+          initialMode="admin"
+        />
+      </>
+    );
   }
 
   // If student is not logged in, show the Login Page before web opens
@@ -40,13 +78,13 @@ export default function App() {
     return (
       <>
         <ArcReactorCursor />
-        <LoginPage 
-        onLoginSuccess={(user) => {
-          setStudentUser(user);
-          if (user.deptId) {
-            setSelectedDeptId(user.deptId);
-          }
-        }} 
+        <LoginPage
+          onLoginSuccess={(user) => {
+            setStudentUser(user);
+            if (user.deptId) setSelectedDeptId(user.deptId);
+          }}
+          onAdminLoginSuccess={async () => { const profile = await getMyProfile(); setAdminSession(profile); }}
+          initialMode={window.location.pathname === '/admin' ? 'admin' : 'student'}
         />
       </>
     );
@@ -92,6 +130,7 @@ export default function App() {
   const handleLogout = () => {
     playClickSound();
     clearStoredUser();
+    void signOutCloud();
     setStudentUser(null);
     setIsQuizOpen(false);
   };
@@ -130,6 +169,7 @@ export default function App() {
           departments={DEPTS}
           studentName={studentUser.name}
           studentDeptId={studentUser.deptId}
+          studentRollNo={studentUser.rollNo}
           onSelectDepartment={handleSelectDepartment}
         />
         

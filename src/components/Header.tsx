@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Volume2, VolumeX, Menu, X, ExternalLink, Award, Sparkles, User, LogOut } from 'lucide-react';
 import { toggleSound, isSoundEnabled, playClickSound } from '../utils/sound';
 import { StudentUser } from '../types/user';
+import { getMyXp } from '../utils/cloud';
 
 interface HeaderProps {
   onStartQuizClick: () => void;
@@ -18,6 +19,14 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [xp, setXp] = useState(0);
+
+  useEffect(() => {
+    const sync = () => { if (currentStudent) void getMyXp().then(setXp).catch(() => setXp(0)); };
+    sync();
+    window.addEventListener('rit:xp-change', sync);
+    return () => window.removeEventListener('rit:xp-change', sync);
+  }, [currentStudent?.rollNo, currentStudent?.name]);
 
   const handleToggleSound = () => {
     const newState = toggleSound();
@@ -70,6 +79,13 @@ export const Header: React.FC<HeaderProps> = ({
       </nav>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Live Fire XP pill */}
+        {currentStudent && (
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#121720] border border-[#55e6a5]/25 text-[10px] font-bold font-mono text-[#55e6a5]">
+            <span>🔥</span><span>{xp.toLocaleString()} XP</span>
+          </div>
+        )}
+
         {/* Student user pill */}
         {currentStudent && (
           <div className="flex items-center gap-2 pl-2 sm:pl-3 pr-2 py-1 bg-[#121720] border border-[#292f38] rounded-full text-xs">

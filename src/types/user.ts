@@ -5,4 +5,5 @@ export interface StudentUser {
   deptCode: string;
   year?: string;
   loginTime: string;
+  authUserId?: string;
 }

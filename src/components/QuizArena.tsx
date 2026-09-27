@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Department } from '../data/departments';
 import { DepartmentIcon } from './DepartmentIcon';
 import { GlobalLeaderboard } from './GlobalLeaderboard';
-import { saveLeaderboardEntry } from '../utils/leaderboardStorage';
 import { 
   Timer, 
   Award, 
@@ -16,12 +15,11 @@ import {
   EyeOff,
   Trophy,
   ArrowLeft,
-  Send,
-  Check
 } from 'lucide-react';
 import { playClickSound, playCorrectSound, playIncorrectSound } from '../utils/sound';
 
 import { StudentUser } from '../types/user';
+import { completeQuizCloud } from '../utils/cloud';
 import { QuizHoloRoom } from './QuizHoloRoom';
 
 interface QuizArenaProps {
@@ -77,17 +75,8 @@ export const QuizArena: React.FC<QuizArenaProps> = ({
   const [history, setHistory] = useState<AnswerHistory[]>([]);
   
   // Leaderboard submission form states
-  const [studentName, setStudentName] = useState(currentStudent?.name || '');
-  const [rollNo, setRollNo] = useState(currentStudent?.rollNo || '');
-  const [submittedToLeaderboard, setSubmittedToLeaderboard] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (currentStudent?.name) {
-      setStudentName(currentStudent.name);
-      if (currentStudent.rollNo) setRollNo(currentStudent.rollNo);
-    }
-  }, [currentStudent]);
+  const [xpEarned, setXpEarned] = useState(0);
+  const xpAwardedRef = useRef(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -130,7 +119,8 @@ export const QuizArena: React.FC<QuizArenaProps> = ({
     setHistory([]);
     setIsCompleted(false);
     setShowReview(false);
-    setSubmittedToLeaderboard(false);
+    setXpEarned(0);
+    xpAwardedRef.current = false;
 
     // Set time according to questions count (12s per question)
     const totalSeconds = Math.max(90, countMode * 12);
@@ -198,36 +188,20 @@ export const QuizArena: React.FC<QuizArenaProps> = ({
     }
   };
 
-  const handleLeaderboardSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentName.trim() || submittedToLeaderboard) return;
-
-    setSubmitting(true);
-    playClickSound();
-
-    const percentage = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
-    const timeTaken = Math.max(1, totalTimeForQuiz - timeLeft);
-    const grade = 
-      percentage >= 90 ? 'Gold Scholar' :
-      percentage >= 75 ? 'First Class with Distinction' :
-      percentage >= 60 ? 'First Class' : 'Engineering Cadet';
-
-    saveLeaderboardEntry({
-      studentName: studentName.trim(),
-      rollNo: rollNo.trim() || undefined,
-      deptId: activeDept.id,
-      deptCode: activeDept.code,
-      score,
-      total: questions.length,
-      percentage,
-      timeTaken,
-      grade
-    });
-
-    playCorrectSound();
-    setSubmittedToLeaderboard(true);
-    setSubmitting(false);
-  };
+  useEffect(() => {
+    if (!isCompleted || !currentStudent || xpAwardedRef.current || questions.length === 0) return;
+    xpAwardedRef.current = true;
+    void (async () => {
+      try {
+        const result = await completeQuizCloud(activeDept.id, score, questions.length, `${currentStudent.authUserId || currentStudent.rollNo}-${activeDept.id}-${Date.now()}`);
+        setXpEarned(Number(result.xp || 0));
+        window.dispatchEvent(new CustomEvent('rit:xp-change'));
+      } catch (err) {
+        console.error('Cloud quiz completion failed:', err);
+        setXpEarned(0);
+      }
+    })();
+  }, [isCompleted, currentStudent, questions.length, score]);
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -519,81 +493,21 @@ export const QuizArena: React.FC<QuizArenaProps> = ({
                     }
                   </div>
 
+                  <div className="quiz-xp-reward">
+                    <Sparkles size={18} />
+                    <div><span>FIRE XP EARNED</span><strong>+{xpEarned} XP</strong></div>
+                    <small>Score XP + completion bonus{percentage === 100 ? ' + perfect-score bonus' : ''}</small>
+                  </div>
+
                   <p className="text-xs sm:text-sm text-[#aeb5c0] max-w-md mx-auto mb-6 leading-relaxed">
                     Come back anytime! The questions and choices reshuffle each attempt to test real conceptual mastery.
                   </p>
 
-                  {/* Submit to Global Leaderboard Card */}
+                  {/* Cloud leaderboard status */}
                   <div className="my-6 p-5 rounded-2xl bg-[#121720] border border-[#292f38] max-w-lg mx-auto text-left">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-[#f5d90a]" />
-                        <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
-                          Post Score to Global Leaderboard
-                        </h4>
-                      </div>
-                      <span className="text-[11px] font-mono text-[#55e6a5] font-semibold">
-                        {percentage}% Accuracy
-                      </span>
-                    </div>
-
-                    {submittedToLeaderboard ? (
-                      <div className="p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-300">
-                        <div className="flex items-center gap-2 font-medium">
-                          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>Score saved to LocalStorage Leaderboard!</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            playClickSound();
-                            setViewMode('leaderboard');
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-[#55e6a5] text-[#06110d] font-bold text-xs hover:bg-[#6ef3b7] transition-all cursor-pointer shrink-0 self-start sm:self-auto"
-                        >
-                          View Leaderboard
-                        </button>
-                      </div>
-                    ) : (
-                      <form onSubmit={handleLeaderboardSubmit} className="space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-[#8b95a3] mb-1">
-                              Student Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={studentName}
-                              onChange={(e) => setStudentName(e.target.value)}
-                              placeholder="e.g. Karthik R."
-                              className="w-full px-3 py-2 bg-[#080a0f] border border-[#292f38] rounded-xl text-xs text-white placeholder-[#707987] focus:outline-none focus:border-[#55e6a5]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-[#8b95a3] mb-1">
-                              Roll No (Optional)
-                            </label>
-                            <input
-                              type="text"
-                              value={rollNo}
-                              onChange={(e) => setRollNo(e.target.value)}
-                              placeholder="e.g. 953621104015"
-                              className="w-full px-3 py-2 bg-[#080a0f] border border-[#292f38] rounded-xl text-xs text-white placeholder-[#707987] focus:outline-none focus:border-[#55e6a5]"
-                            />
-                          </div>
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={submitting || !studentName.trim()}
-                          className="w-full py-2.5 px-4 rounded-xl bg-[#55e6a5] text-[#06110d] font-bold text-xs uppercase tracking-wider hover:bg-[#6ef3b7] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          <span>Submit to Leaderboard</span>
-                        </button>
-                      </form>
-                    )}
+                    <div className="flex items-center gap-2 text-white font-bold text-xs uppercase tracking-wider"><Trophy className="w-4 h-4 text-[#f5d90a]" /> CLOUD LEADERBOARD</div>
+                    <p className="text-xs text-[#aeb5c0] mt-2">Your quiz attempt and Fire XP were recorded in Supabase PostgreSQL automatically. No separate score submission is required.</p>
+                    <button onClick={() => { playClickSound(); setViewMode('leaderboard'); }} className="mt-3 px-4 py-2 rounded-lg bg-[#55e6a5] text-[#06110d] font-bold text-xs">View Live XP Leaderboard</button>
                   </div>
 
                   <div className="flex flex-wrap gap-3 justify-center items-center">
